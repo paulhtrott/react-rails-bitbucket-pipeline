@@ -1,0 +1,41 @@
+# This is a sample build configuration for Ruby.
+# Check our guides at https://confluence.atlassian.com/x/VYk8Lw for more examples.
+# Only use spaces to indent your .yml configuration.
+# -----
+# You can specify a custom docker image from Docker Hub as your build environment.
+# Copy over your test data sample yml for tests
+# cp ${BITBUCKET_CLONE_DIR}/config/application.sample.yml ${BITBUCKET_CLONE_DIR}/config/application.yml
+image: ruby:2.5.1
+
+pipelines:
+  default:
+    - step:
+        caches:
+          - bundler
+          - yarn
+        script:
+        script: # Modify the commands below to build your repository.
+          - apt-get update
+          - curl -sL https://deb.nodesource.com/setup_9.x | bash -
+          - apt-get install -y nodejs apt-transport-https
+          - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.5.1
+          - bundle install --path vendor/bundle
+          - cp ${BITBUCKET_CLONE_DIR}/config/application.sample.yml ${BITBUCKET_CLONE_DIR}/config/application.yml
+          - export PATH=$HOME/.yarn/bin:$PATH
+          - yarn --version
+          - yarn
+          - bundle exec rake
+        services:
+          - postgres
+
+definitions:
+  caches:
+    bundler: ./vendor/bundle
+    yarn: ./node_modules
+  services:
+    postgres:
+      image: postgres
+      environment:
+        POSTGRES_DB: 'test_db'
+        POSTGRES_USER: 'root'
+        POSTGRES_PASSWORD: 'test_user_password'
